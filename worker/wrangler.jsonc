@@ -5,12 +5,12 @@
   "compatibility_date": "2026-10-08",
   "compatibility_flags": ["nodejs_compat"],
 
-  // Only reachable through the custom domain below, which sits behind Cloudflare Access.
+  // Only reachable through the custom domain below, which requires sign-in.
   "workers_dev": false,
   "preview_urls": false,
 
   // Serves the static frontend (next build -> ../frontend/out). run_worker_first lets the
-  // Worker check the Access login before serving *anything*, pages included.
+  // Worker check the sign-in before serving *anything*, pages included.
   "assets": {
     "directory": "../frontend/out",
     "binding": "ASSETS",
@@ -18,13 +18,14 @@
     "run_worker_first": true
   },
 
-  // Only reachable here, behind Cloudflare Access (the domain must be on Cloudflare DNS).
+  // Only reachable here, behind Google sign-in + an email allowlist (the domain must be on Cloudflare DNS).
   "routes": [{ "pattern": "health.kajalandnathan.com", "custom_domain": true }],
 
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "health-journal",
+      "database_id": "6244aded-e807-4e79-8e1e-2853a77531e0",
       "migrations_dir": "migrations"
     }
   ],
@@ -33,13 +34,12 @@
     // IANA timezone that defines "today" and the wake-up day for sleep
     "TIMEZONE": "Europe/London",
     "STEP_GOAL": "10000",
-    // Fail closed: refuse to serve data unless Access is configured (set false only in .dev.vars)
-    "REQUIRE_ACCESS": "true",
+    // Fail closed: refuse to serve anything unless sign-in is configured (set false only in .dev.vars)
+    "REQUIRE_AUTH": "true",
 
-    // Fill these in for your deployment (see README.md):
     "PUBLIC_URL": "https://health.kajalandnathan.com",  // OAuth redirect = PUBLIC_URL/auth/callback
-    "ACCESS_TEAM_DOMAIN": "",  // e.g. https://your-team.cloudflareaccess.com
-    "ACCESS_AUD": "",          // the Access application's AUD tag
+    // (secrets, set with `wrangler secret put`: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, APP_SECRET,
+    //  ALLOWED_EMAILS = comma-separated Google emails allowed to sign in)
 
     // Local development only (set in .dev.vars):
     "FRONTEND_URL": "",

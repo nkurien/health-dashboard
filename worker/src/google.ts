@@ -34,6 +34,19 @@ export function buildAuthUrl(env: OAuthEnv, state: string): string {
   return `${AUTH_URL}?${params}`;
 }
 
+/** Sign-in only asks who you are (email) — no health data scopes. */
+export function buildSigninUrl(env: OAuthEnv, state: string): string {
+  const params = new URLSearchParams({
+    client_id: env.GOOGLE_CLIENT_ID,
+    redirect_uri: redirectUri(env),
+    response_type: "code",
+    scope: "openid email",
+    state,
+    prompt: "select_account",
+  });
+  return `${AUTH_URL}?${params}`;
+}
+
 function parseTokens(json: unknown): GoogleTokens | null {
   if (typeof json !== "object" || json === null) return null;
   const j = json as Record<string, unknown>;
@@ -64,10 +77,10 @@ export const exchangeCode = (env: OAuthEnv, code: string) =>
 export const refreshAccessToken = (env: Pick<Env, "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET">, refreshToken: string) =>
   tokenRequest({ ...env, PUBLIC_URL: "" }, { refresh_token: refreshToken, grant_type: "refresh_token" });
 
-export async function fetchUserInfo(accessToken: string): Promise<{ id?: string; name?: string; email?: string }> {
+export async function fetchUserInfo(accessToken: string): Promise<{ id?: string; name?: string; email?: string; verified_email?: boolean }> {
   const resp = await fetch(USERINFO_URL, {
     headers: { Authorization: `Bearer ${accessToken}` },
     signal: AbortSignal.timeout(10_000),
   });
-  return resp.ok ? ((await resp.json()) as { id?: string; name?: string; email?: string }) : {};
+  return resp.ok ? ((await resp.json()) as { id?: string; name?: string; email?: string; verified_email?: boolean }) : {};
 }

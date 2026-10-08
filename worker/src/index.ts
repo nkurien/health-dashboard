@@ -1,7 +1,7 @@
-import { checkAccess } from "./access";
 import * as auth from "./auth";
 import { todayIn } from "./dates";
 import { buildUserMetrics, invalidateMetrics } from "./metrics";
+import { currentUser } from "./session";
 import { isUserId, USER_IDS } from "./types";
 
 const SECURITY_HEADERS: Record<string, string> = {
@@ -65,6 +65,8 @@ async function route(request: Request, env: Env): Promise<Response> {
     return json(await buildUserMetrics(env, m[1], today()));
   }
 
+  if (pathname === "/auth/signin" && method === "GET") return auth.signin(env);
+  if (pathname === "/auth/signout" && method === "GET") return auth.signout(env);
   if (pathname === "/auth/status" && method === "GET") return auth.status(env);
   if (pathname === "/auth/callback" && method === "GET") return auth.callback(request, env);
 
@@ -84,13 +86,36 @@ async function route(request: Request, env: Env): Promise<Response> {
   return env.ASSETS.fetch(request);
 }
 
+/** Reachable without being signed in: the sign-in handshake itself and the health check. */
+const PUBLIC_PATHS = new Set(["/health", "/auth/signin", "/auth/callback", "/auth/signout"]);
+
+/** Returns a Response if the visitor must not proceed (not configured / not signed in). */
+async function gate(request: Request, env: Env): Promise<Response | null> {
+  if (env.REQUIRE_AUTH === "false") return null; // local development only
+  const { pathname } = new URL(request.url);
+  if (PUBLIC_PATHS.has(pathname)) return null;
+
+  // Fail closed if sign-in isn't set up: nobody gets in
+  if (!env.APP_SECRET || !env.ALLOWED_EMAILS?.trim()) {
+    console.error("REQUIRE_AUTH is on but APP_SECRET / ALLOWED_EMAILS are not set");
+    return new Response("Service not configured", { status: 503 });
+  }
+  if (await currentUser(request, env)) return null;
+
+  // Pages send the browser to sign in; API calls just get a 401
+  const wantsPage = request.method === "GET" && !pathname.startsWith("/api/") && !pathname.startsWith("/auth/");
+  return wantsPage
+    ? new Response(null, { status: 302, headers: { Location: "/auth/signin" } })
+    : Response.json({ detail: "Not signed in" }, { status: 401 });
+}
+
 export default {
   async fetch(request, env): Promise<Response> {
     const cors = corsHeaders(request, env);
 
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
 
-    const denied = await checkAccess(request, env);
+    const denied = await gate(request, env);
     if (denied) return withHeaders(denied);
 
     if (request.method === "POST" && !sameOriginOk(request, env)) {

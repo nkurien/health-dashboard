@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { DashboardResponse, AuthStatus, Person } from "@/lib/types";
-import { fetchDashboard, fetchAuthStatus } from "@/lib/api";
+import { fetchDashboard, fetchAuthStatus, signoutUrl } from "@/lib/api";
 import { firstName } from "@/lib/format";
 import Header from "@/components/Header";
 import PeopleStrip from "@/components/PeopleStrip";
@@ -102,7 +102,8 @@ export default function DashboardPage() {
       <PeopleStrip people={people} status={authStatus} onChange={refresh} />
 
       <footer className="footer">
-        Data from Google Health · refreshes every 15 minutes · for curiosity, not medical advice
+        Data from Google Health · refreshes every 15 minutes · for curiosity, not medical advice ·{" "}
+        <a href={signoutUrl} className="muted" style={{ textDecoration: "underline" }}>Sign out</a>
       </footer>
     </main>
   );

@@ -11,6 +11,10 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
     headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
   });
+  if (res.status === 401 && typeof window !== "undefined") {
+    // Session ended: go sign in again (the Worker brings us back here afterwards)
+    window.location.href = `${API_URL}/auth/signin`;
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => "Unknown error");
     throw new Error(`API ${path} failed (${res.status}): ${text}`);
@@ -42,3 +46,6 @@ export async function disconnectUser(userId: "user1" | "user2"): Promise<void> {
 export function loginUrl(userId: "user1" | "user2"): string {
   return `${API_URL}/auth/login/${userId}`;
 }
+
+/** Sign out of this browser. */
+export const signoutUrl = `${API_URL}/auth/signout`;

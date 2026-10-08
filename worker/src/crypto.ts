@@ -77,6 +77,31 @@ export async function verifyState(secret: string, state: string, now = Date.now(
   return { userId, nonce };
 }
 
+const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+export const SESSION_TTL_SECONDS = SESSION_TTL_MS / 1000;
+const sessionKey = (secret: string) => hkdf(secret, "session", ["sign", "verify"], { name: "HMAC", hash: "SHA-256", length: 256 });
+
+/** Login cookie value: "<base64url email>.<expiresAtMs>.<hmac>". Tamper-proof, expiring. */
+export async function signSession(secret: string, email: string, now = Date.now()): Promise<string> {
+  const payload = `${b64url(enc.encode(email).buffer as ArrayBuffer)}.${now + SESSION_TTL_MS}`;
+  const sig = await crypto.subtle.sign("HMAC", await sessionKey(secret), enc.encode(payload));
+  return `${payload}.${b64url(sig)}`;
+}
+
+/** The signed-in email, or null if the cookie is missing/forged/expired. */
+export async function verifySession(secret: string, value: string, now = Date.now()): Promise<string | null> {
+  const parts = value.split(".");
+  if (parts.length !== 3) return null;
+  const [who, exp, sig] = parts as [string, string, string];
+  try {
+    const ok = await crypto.subtle.verify("HMAC", await sessionKey(secret), unb64url(sig), enc.encode(`${who}.${exp}`));
+    if (!ok || !(Number(exp) > now)) return null;
+    return dec.decode(unb64url(who));
+  } catch {
+    return null;
+  }
+}
+
 export function randomNonce(): string {
   return b64url(crypto.getRandomValues(new Uint8Array(24)).buffer);
 }
