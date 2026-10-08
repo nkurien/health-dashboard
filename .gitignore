@@ -1,0 +1,29 @@
+# Secrets and personal data - never commit
+.env
+.env.*
+!.env.example
+!.env.local.example
+*.db
+*.sqlite*
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Cloudflare
+.wrangler/
+.dev.vars

@@ -1,0 +1,8 @@
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+# any long random string; derives the signing + token-encryption keys: openssl rand -base64 32
+APP_SECRET=
+PUBLIC_URL=http://localhost:8787
+FRONTEND_URL=http://localhost:3000
+DEV_CORS_ORIGIN=http://localhost:3000
+REQUIRE_ACCESS=false
