@@ -3,7 +3,7 @@ import { HealthClient } from "./health";
 import {
   mockHrvSeries, mockRhrSeries, mockSleepStages, mockSteps, stagesAsleep, stagesTotal,
 } from "./mock";
-import { computeReadiness, mean, median } from "./readiness";
+import { computeReadiness, mean, median, stdev } from "./readiness";
 import { RequestTokenSource, TokenStore } from "./tokens";
 import type { MetricKey, SleepStages, UserId, UserMetrics } from "./types";
 
@@ -25,7 +25,7 @@ export async function buildUserMetrics(env: Env, userId: UserId, date: string): 
   if (hit) return { ...((await hit.json()) as UserMetrics), from_cache: true };
 
   const weekStart = addDays(date, -6);
-  const baselineStart = addDays(date, -(BASELINE_DAYS - 1));
+  const baselineStart = addDays(date, -BASELINE_DAYS);
   const tokens = new RequestTokenSource(new TokenStore(env.DB, env.APP_SECRET), userId, env);
   const client = new HealthClient(tokens);
 
@@ -73,9 +73,12 @@ export async function buildUserMetrics(env: Env, userId: UserId, date: string): 
   const todayRhr = rhr30.find((p) => p.date === date)?.rhr ?? null;
   const todayHrv = hrv30.find((p) => p.date === date)?.rmssd ?? null;
 
+  const priorHrv30 = hrv30.filter((p) => p.date !== date).map((p) => p.rmssd);
   const readiness = computeReadiness({
     todayHrv,
-    hrvBaseline: median(hrv30.filter((p) => p.date !== date).map((p) => p.rmssd)),
+    hrvBaseline: median(priorHrv30),
+    hrvSpread: stdev(priorHrv30),
+    // display-only: feeds the "why" lines, not the score
     todayRhr,
     rhrBaseline: median(rhr30.filter((p) => p.date !== date).map((p) => p.rhr)),
     recentAsleepMin: [0, 1, 2].map((i) => {
