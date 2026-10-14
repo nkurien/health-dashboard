@@ -31,7 +31,7 @@ npm run typecheck
 
 ## Deploying (first time)
 
-Replace `health.kajalandnathan.com` with your hostname (its domain must be on Cloudflare DNS).
+Replace `health.example.com` with your hostname (its domain must be on Cloudflare DNS).
 
 1. **Log in:** `npx wrangler login`
 2. **Create the database** and copy the `database_id` it prints into `wrangler.jsonc`:
@@ -39,9 +39,9 @@ Replace `health.kajalandnathan.com` with your hostname (its domain must be on Cl
    npx wrangler d1 create health-journal
    npx wrangler d1 migrations apply health-journal --remote
    ```
-3. **Fill in `wrangler.jsonc`:** `PUBLIC_URL` (`https://health.kajalandnathan.com`) and the route:
+3. **Fill in `wrangler.jsonc`:** `PUBLIC_URL` (`https://health.example.com`) and the route:
    ```jsonc
-   "routes": [{ "pattern": "health.kajalandnathan.com", "custom_domain": true }]
+   "routes": [{ "pattern": "health.example.com", "custom_domain": true }]
    ```
 4. **Secrets** (prompted interactively, or `< file`; never put these in a file you commit):
    ```bash
@@ -50,7 +50,7 @@ Replace `health.kajalandnathan.com` with your hostname (its domain must be on Cl
    npx wrangler secret put APP_SECRET        # openssl rand -base64 32 — don't lose it: it decrypts stored tokens
    npx wrangler secret put ALLOWED_EMAILS    # e.g. you@gmail.com,partner@gmail.com — who may sign in
    ```
-5. **Google Cloud** → OAuth client → add `https://health.kajalandnathan.com/auth/callback` to Authorized redirect URIs.
+5. **Google Cloud** → OAuth client → add `https://health.example.com/auth/callback` to Authorized redirect URIs.
    Keep the app in *Testing* with both emails under *Test users* — a second lock on who can sign in.
 6. **Deploy:** `npm run deploy` (builds the frontend, then `wrangler deploy`).
 7. Open the site, sign in with Google, then **Connect** each person's health data (a second Google consent).

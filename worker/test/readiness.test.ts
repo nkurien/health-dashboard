@@ -51,7 +51,7 @@ describe("sleep weighting", () => {
 });
 
 describe("tracks real Fitbit readiness days", () => {
-  // [fitbit, hrv, 30-day median, 30-day SD] from user1's labelled days
+  // [fitbit, hrv, 30-day median, 30-day SD] from labelled calibration days
   const days: Array<[number, number, number, number]> = [
     [66, 36.25, 35.8, 4.5],
     [53, 34.0, 36.2, 4.72],
