@@ -63,6 +63,7 @@ export function SleepRow({ people, isLoading }: RowProps) {
           <div>
             <div className="big">{fmtDuration(asleep)}</div>
             <div className="caption">asleep · {s.efficiency_pct}% of the night in bed</div>
+            {s.score != null && <div className="caption">sleep score {s.score}</div>}
             <StageBar stages={s.stages} fmt={fmtDuration} />
             {series.length > 1 && (
               <div className="sub">

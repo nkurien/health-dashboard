@@ -3,6 +3,7 @@ import { HealthClient } from "./health";
 import {
   mockHrvSeries, mockRhrSeries, mockSleepStages, mockSteps, stagesAsleep, stagesTotal,
 } from "./mock";
+import { sleepScore } from "./sleepScore";
 import { computeReadiness, mean, median, stdev } from "./readiness";
 import { RequestTokenSource, TokenStore } from "./tokens";
 import type { MetricKey, SleepStages, UserId, UserMetrics } from "./types";
@@ -102,6 +103,7 @@ export async function buildUserMetrics(env: Env, userId: UserId, date: string): 
     sleep: {
       total_minutes: errors.sleep ? null : total,
       efficiency_pct: errors.sleep ? null : total > 0 ? Math.round((stagesAsleep(lastNight) / total) * 1000) / 10 : 0,
+      score: errors.sleep ? null : sleepScore(lastNight),
       stages: lastNight,
       series: sleepSeries,
       is_mock: isMock,

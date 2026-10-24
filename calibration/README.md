@@ -134,3 +134,16 @@ lower at the same z) rather than a different slope; give user2 their own constan
 1. Update the constants/terms in `worker/src/readiness.ts` and the header comment.
 2. Update `worker/test/readiness.test.ts` (and re-run `cd worker && npm test`).
 3. `cd worker && npm run deploy`.
+
+## Sleep score (Oct 24, user1, 63 nights Jul 28 - Oct 8; `data/fitbit_sleep_scores_user1.csv`)
+
+Fitbit's sleep score IS visible in the app (unlike readiness), so we fit it. Labels run to Oct 24 but
+features only to Oct 8 (local Google token expired), so Oct 9-24 are unused until `export_features.mjs` is re-run.
+
+- Hand-set 50/25/25 formula: correlation 0.91 but biased, MAE 11.1 (worse than the mean, 8.0). Replaced.
+- First fit (50 nights, linear in minutes asleep): LOO 4.2. On the 13 later nights (Sep 20 - Oct 8) it scored 5.3 vs 9.7 for the mean.
+- Biggest miss was a night with 866 min "asleep" scored 21 too high: **duration saturates**. Capping minutes asleep
+  at 450 cut LOO from 3.8 to 2.9; any cap 440-480 is within noise (chose 450 = 7.5 h). Cap picked on first 45 nights, tested on last 18: 3.6 (mean: 9.8).
+- Deep share, REM share and efficiency each still help (dropping efficiency: 3.4; deep: 3.0). RHR, sessions, in-bed minutes add nothing.
+- Deployed (`worker/src/sleepScore.ts`): `-21.9 + 0.1257*min(asleep,450) + 27.3*deep_share + 31.1*rem_share + 40.2*efficiency`, clamped 0-100. In-sample MAE 2.6.
+- Worst remaining: Oct 4 (258 min asleep) scored 13 too high; very short nights may be non-linear. Too few to model.

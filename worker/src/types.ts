@@ -5,6 +5,7 @@ export interface SleepStages { deep: number; rem: number; light: number; wake: n
 export interface SleepData {
   total_minutes: number | null;
   efficiency_pct: number | null;
+  score: number | null;
   stages: SleepStages;
   series: Array<{ date: string; asleep_minutes: number }>;
   is_mock: boolean;

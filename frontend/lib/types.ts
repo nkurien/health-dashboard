@@ -15,6 +15,7 @@ export interface SleepStages {
 export interface SleepData {
   total_minutes: number | null;   // time in bed; null if the request failed
   efficiency_pct: number | null;
+  score: number | null;       // 0–100; null when no sleep was recorded
   stages: SleepStages;
   /** Minutes actually asleep per night, by wake-up date, oldest first. */
   series?: Array<{ date: string; asleep_minutes: number }>;
