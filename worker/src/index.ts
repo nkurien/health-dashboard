@@ -1,5 +1,5 @@
 import * as auth from "./auth";
-import { todayIn } from "./dates";
+import { parseDashboardDate, todayIn } from "./dates";
 import { buildUserMetrics, invalidateMetrics } from "./metrics";
 import { currentUser } from "./session";
 import { isUserId, USER_IDS } from "./types";
@@ -49,7 +49,9 @@ async function route(request: Request, env: Env): Promise<Response> {
   let m: RegExpMatchArray | null;
 
   if (pathname === "/api/dashboard" && method === "GET") {
-    const date = today();
+    const requested = new URL(request.url).searchParams.get("date");
+    const date = requested == null ? today() : parseDashboardDate(requested, today());
+    if (date == null) return json({ detail: "date must be a real YYYY-MM-DD within the past year" }, 400);
     const [user1, user2] = await Promise.all(USER_IDS.map((id) => buildUserMetrics(env, id, date)));
     return json({ date, user1, user2 });
   }

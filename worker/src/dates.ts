@@ -36,3 +36,15 @@ export function localDateOf(timestamp: string, utcOffset: string | undefined): s
   const seconds = Number.parseInt((utcOffset ?? "0s").replace(/s$/, ""), 10) || 0;
   return new Date(Date.parse(timestamp) + seconds * 1000).toISOString().slice(0, 10);
 }
+
+/** How far back the dashboard can be asked to look. */
+export const MAX_LOOKBACK_DAYS = 365;
+
+/** A requested dashboard date, or null if it isn't a real calendar date between a year ago and today. */
+export function parseDashboardDate(raw: string, today: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  const d = new Date(`${raw}T00:00:00Z`);
+  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== raw) return null; // e.g. 2026-02-31
+  if (raw > today || raw < addDays(today, -MAX_LOOKBACK_DAYS)) return null;
+  return raw;
+}

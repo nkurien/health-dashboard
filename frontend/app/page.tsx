@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import type { DashboardResponse, AuthStatus, Person } from "@/lib/types";
 import { fetchDashboard, fetchAuthStatus, signoutUrl } from "@/lib/api";
-import { firstName } from "@/lib/format";
+import { firstName, todayISO } from "@/lib/format";
 import Header from "@/components/Header";
 import PeopleStrip from "@/components/PeopleStrip";
 import { HeartRow, RecoveryRow, SleepRow, StepsRow } from "@/components/MetricRows";
@@ -17,23 +17,31 @@ export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [viewDate, setViewDate] = useState(() => todayISO());
+  const isToday = viewDate === todayISO();
+  const latest = useRef(0); // ignore a slow response for a day we've already left
 
   // No state is set before the first await, so this is safe to call from effects.
   const loadData = useCallback(async () => {
+    const mine = ++latest.current;
     try {
-      const [dash, auth] = await Promise.all([fetchDashboard(), fetchAuthStatus()]);
+      const [dash, auth] = await Promise.all([fetchDashboard(isToday ? undefined : viewDate), fetchAuthStatus()]);
+      if (mine !== latest.current) return;
       setError(null);
       setDashboard(dash);
       setAuthStatus(auth);
       setLastUpdated(new Date());
     } catch (err) {
+      if (mine !== latest.current) return;
       const msg = err instanceof Error ? err.message : "Failed to load data";
       setError(msg);
     } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      if (mine === latest.current) {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
     }
-  }, []);
+  }, [isToday, viewDate]);
 
   // Initial load
   useEffect(() => {
@@ -51,11 +59,12 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // Auto-poll every 15 minutes
+  // Auto-poll every 15 minutes (only worth doing for today)
   useEffect(() => {
+    if (!isToday) return;
     const timer = setInterval(() => void loadData(), POLL_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [loadData]);
+  }, [loadData, isToday]);
 
   const people: Person[] = [
     {
@@ -77,9 +86,17 @@ export default function DashboardPage() {
     void loadData();
   }, [loadData]);
 
+  const changeDate = useCallback((date: string) => {
+    setIsLoading(true);
+    setViewDate(date);
+  }, []);
+
   return (
     <main className="page">
-      <Header people={people} lastUpdated={lastUpdated} isRefreshing={isRefreshing} onRefresh={refresh} />
+      <Header
+        people={people} lastUpdated={lastUpdated} isRefreshing={isRefreshing} onRefresh={refresh}
+        viewDate={viewDate} onChangeDate={changeDate}
+      />
 
       {error && (
         <div className="alert" role="alert">
@@ -102,7 +119,7 @@ export default function DashboardPage() {
       <PeopleStrip people={people} status={authStatus} onChange={refresh} />
 
       <footer className="footer">
-        Data from Google Health · refreshes every 15 minutes · for curiosity, not medical advice ·{" "}
+        Data from Google Health · refreshes every 15 minutes on today · for curiosity, not medical advice ·{" "}
         <a href={signoutUrl} className="muted" style={{ textDecoration: "underline" }}>Sign out</a>
       </footer>
     </main>

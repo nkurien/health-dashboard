@@ -97,3 +97,21 @@ export function summaryLines(people: Person[]): string[] {
   }
   return lines;
 }
+
+/** Furthest back the day picker goes (the API allows the same). */
+export const MAX_LOOKBACK_DAYS = 365;
+
+/** Today's date as YYYY-MM-DD in the browser's timezone. */
+export function todayISO(now: Date = new Date()): string {
+  return now.toLocaleDateString("en-CA");
+}
+
+export function shiftDay(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y!, m! - 1, d! + days).toLocaleDateString("en-CA");
+}
+
+export function longDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y!, m! - 1, d!).toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
+}

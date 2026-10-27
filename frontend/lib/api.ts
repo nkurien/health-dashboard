@@ -22,9 +22,9 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-/** Fetch combined metrics for both users. */
-export async function fetchDashboard(): Promise<DashboardResponse> {
-  return apiFetch<DashboardResponse>("/api/dashboard");
+/** Fetch combined metrics for both users, for today or a past day (YYYY-MM-DD). */
+export async function fetchDashboard(date?: string): Promise<DashboardResponse> {
+  return apiFetch<DashboardResponse>(date ? `/api/dashboard?date=${date}` : "/api/dashboard");
 }
 
 /** Fetch OAuth connection status for both users. */

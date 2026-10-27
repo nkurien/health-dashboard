@@ -124,6 +124,15 @@ a { color: inherit; }
   font-weight: 600;
   line-height: 1.1;
 }
+.date-nav { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.date-nav .date { margin: 0; }
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 999px;
+  border: 1px solid var(--line); background: transparent; color: var(--ink-2); cursor: pointer;
+}
+.icon-btn:hover:not(:disabled) { border-color: var(--ink-3); color: var(--ink); }
+.icon-btn:disabled { opacity: .35; cursor: default; }
 .header .date { margin: 6px 0 0; color: var(--ink-3); font-size: 14px; }
 
 .summary {
